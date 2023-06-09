@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "state_toggle_relay": "Garage door toggle relay/switch",
+          "closed_sensor": "Door closed sensor",
+          "invert_closed_sensor": "Invert closed sensor",
+          "close_time": "Typical door close time",
+          "opened_sensor": "Door opened sensor",
+          "invert_opened_sensor": "Invert opened sensor",
+          "open_time": "Typical door open time"
+        }
+      }
+    },
+
+    "error": {
+      "invalid_open_time": "Time to open must be over zero seconds",
+      "invalid_close_time": "Time to close must be over zero seconds",
+      "sensor_required": "For proper operation, at least one door sensor is required (door opened or door closed)"
+    }
+  },
+
+  "entity": {
+    "cover": {
+      "door": {
+        "name": "Door"
+      }
+    },
+    "binary_sensor": {
+      "blocked": {
+        "name": "Obstructed",
+        "state": {
+          "ok": "No",
+          "problem": "Blocked"
+        }
+      }
+    },
+    "sensor": {
+      "time_to_opened": {
+        "name": "Last opening time"
+      },
+      "time_to_closed": {
+        "name": "Last closing time"
+      }
+    }
+  },
+
+  "issues": {
+    "open_and_closed": {
+      "title": "Sensors conflict",
+      "description": "Both of open and close sensors are tripped at the same time, indicating that the door is open and closed at the same time. Verify that correct sensors are chosen, and that they're working correctly."
+    },
+    "closed_when_opening": {
+      "title": "Unexpected sensor triggered",
+      "description": "The door indicated closed position during opening cycle. Make sure opened/closed sensors aren't reversed and nothing is blocking the door."
+    },
+    "opened_when_closing": {
+      "title": "Unexpected sensor triggered",
+      "description": "The door indicated opened position during closing cycle. Make sure opened/closed sensors aren't reversed and nothing is blocking the door."
+    },
+    "closed_after_opening": {
+      "title": "Door may be blocked",
+      "description": "The door was commanded to open however, it did not move from its closed position. Make sure your garage opener is being controller and nothing is blocking the door."
+    },
+    "open_after_closing": {
+      "title": "Door may be blocked",
+      "description": "The door was commanded to close however, it did not move from its fully opened position. Make sure your garage opener is being controller and nothing is blocking the door."
+    }
+  }
+}
