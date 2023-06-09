@@ -220,12 +220,14 @@ class UpSmartGarageCover(CoverEntity):
         if self._toggle_state is None:  # this can happen esp. when the integration started before relay integration
             _LOGGER.warning(f"Toggle in unknown state - attempting pulse anyway")
 
-        self.hass.states.async_set(self._garage_state.controller.toggle_controller, 'On')
+        await self.hass.services.async_call('homeassistant', 'turn_on',
+                                            {'entity_id': self._garage_state.controller.toggle_controller})
         self._toggle_state = True
         # cannot use async_call_later() here, as we need an async job to await, making rest of the code simpler
         await asyncio.sleep(self._garage_state.controller.pulse_time)
         _LOGGER.debug(f"Toggle pulse finished for {self.unique_id}")
-        self.hass.states.async_set(self._garage_state.controller.toggle_controller, 'Off')
+        await self.hass.services.async_call('homeassistant', 'turn_off',
+                                            {'entity_id': self._garage_state.controller.toggle_controller})
         self._toggle_state = False
         self._garage_state.error = False  # clear error if any; we moved the door (presumably)
 
