@@ -37,8 +37,12 @@ You need, at minimum:
 
  - A relay to bridge garage opener toggle button
  - A reed sensor near the edge of the door
+ - HACS *(for now)*
 
-Then, add an integration and select correct entities as prompted by HA - no JSON editing needed :)
+To install the integration use [HACS](https://hacs.xyz/docs/faq/custom_repositories) with a custom repository URL. This
+integration is planned to be integrated into HA core once it's robust enough.
+
+Then, add an integration to HA as normal and select correct entities as prompted by HA - no JSON editing needed :)
 
 
 ### How does it work?
