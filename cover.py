@@ -116,9 +116,12 @@ class UpSmartGarageCover(CoverEntity):
     def is_opening(self) -> bool | None:
         """Determines whether the door is currently moving in the close-to-open direction"""
         if self._garage_state.last_state is None:  # if last state is unknown we don't know if it's opening or closing
-            _LOGGER.debug("isOpening? => None")
+            _LOGGER.debug("isOpening? lstate=None => result=None")
             return None
-        _LOGGER.debug(f"isOpening? => target={self._garage_state.target_state} result={self._garage_state.target_state == DoorState.OPENED}")
+
+        _LOGGER.debug(f"isOpening? lstate={self._garage_state.last_state} "
+                      f"target={self._garage_state.target_state} => " 
+                      f"result={self._garage_state.target_state == DoorState.OPENED}")
         return self._garage_state.target_state == DoorState.OPENED
 
     @property
@@ -319,11 +322,13 @@ class UpSmartGarageCover(CoverEntity):
         event_state = self.value_to_bool(event.data.get('new_state').state)
         _LOGGER.debug(f"{self.unique_id} detected action controller state transition to {event_state}")
         if self._toggle_state == event_state:  # ignore - we triggered it via _toggle_pulse()
+            _LOGGER.debug(f"{self.unique_id} transition state is the same as _toggle_state - ignoring")
             return
 
         # we're DELIBERATELY ignoring transition to "off" state. This can be either the external relay automatically
         # turning off without HA prompting it to do so (safety feature)
         if not event_state:
+            _LOGGER.debug(f"{self.unique_id} transition to off - ignoring")
             return
 
         # since the toggle turned on outside our integration (either from another HA automation or e.g. via native
