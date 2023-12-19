@@ -19,7 +19,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Up-Smart Garage."""
     VERSION = 1
     data_schema = {
-        vol.Required("name", default="Garage Opener"): str,
+        vol.Required(CONF_NAME, default=ATTR_NAME): str,
         vol.Required(CONF_TOGGLE_RELAY): selector({
             "entity": {
                 "filter": {"domain": ["switch", "input_boolean"]}

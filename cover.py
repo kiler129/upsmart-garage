@@ -10,12 +10,12 @@ import asyncio
 from homeassistant.core import HomeAssistant, Event, callback, CALLBACK_TYPE
 from homeassistant.components.cover import CoverEntity, CoverDeviceClass, CoverEntityFeature
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event, async_call_later
 from homeassistant.helpers import issue_registry as ir
 
 from .const import DOMAIN
+from .entity import UpSmartGarageEntity
 from .model import DoorState
 if TYPE_CHECKING:
     from .model import GarageDoorState
@@ -38,10 +38,8 @@ async def async_setup_entry(
 
 # The cover is the main state machine for the integration. Other entities derive its state from what the cover persists
 # in the GarageDoorState.
-class UpSmartGarageCover(CoverEntity):
+class UpSmartGarageCover(UpSmartGarageEntity, CoverEntity):
     _transition_grace_multiplier: Final[float] = 1.1
-    _attr_has_entity_name = True
-    _attr_translation_key = "door"
     _attr_icon = "mdi:garage"
     _attr_device_class = CoverDeviceClass.GARAGE
 
@@ -52,16 +50,8 @@ class UpSmartGarageCover(CoverEntity):
     _toggle_state: bool | None = None  # toggle button state used to control the open/close/stop action of the door
 
     def __init__(self, hass: HomeAssistant, state: GarageDoorState):
-        self.hass = hass  # EntityPlatform sets this normally but to watch for events right away we need it earlier
-        self._garage_state = state
-        self._attr_unique_id = f"{self._garage_state.internal_id}_door"
-        self._subscribe_state_changes()
+        super().__init__(hass, state, "door")
         self._sync_state()
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return DeviceInfo(identifiers={(DOMAIN, self._garage_state.internal_id)}, default_name="Garage Door",
-                          suggested_area="Garage")
 
     @property
     def supported_features(self) -> CoverEntityFeature:

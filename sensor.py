@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from abc import abstractmethod
+
 import datetime
 import time
 from typing import TYPE_CHECKING
@@ -15,6 +17,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.const import (Platform, UnitOfTime, EntityCategory)
 
 from .const import DOMAIN
+from .entity import UpSmartCoverDerivedEntity
 from .model import DoorState
 if TYPE_CHECKING:
     from .model import GarageDoorState
@@ -43,41 +46,21 @@ async def async_setup_entry(
 
 # The sensor exposes real time spent closing/opening the doors. This is more diagnostic, but can also be used for
 # initial calibration if the uses so chooses.
-class GarageTransitionTimeSensor(SensorEntity):
-    _attr_has_entity_name = True
+
+class GarageTransitionTimeSensor(UpSmartCoverDerivedEntity, SensorEntity):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
     _attr_suggested_display_precision = 0
 
-    _garage_state: GarageDoorState
     _accumulating: float | None = None
-    _target_of_interest: DoorState
+    _target_of_interest: DoorState = None # type: ignore[assignment]
 
-    def __init__(self, hass: HomeAssistant, state: GarageDoorState):
-        self.hass = hass  # EntityPlatform sets this normally but to watch for events right away we need it earlier
-        self._garage_state = state
-        self._attr_unique_id = f"{self._garage_state.internal_id}_time_to_{self._target_of_interest.name.lower()}"
-        self._subscribe_state_changes()
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return DeviceInfo(identifiers={(DOMAIN, self._garage_state.internal_id)}, default_name="Garage Door",
-                          suggested_area="Garage")
-
-    @property
-    def should_poll(self) -> bool:
-        return False
-
-    def _subscribe_state_changes(self) -> None:
-        door_uid = f"{self._garage_state.internal_id}_door"
-        door_eid = er.async_get(self.hass).async_get_entity_id(Platform.COVER, DOMAIN, door_uid)
-
-        if door_eid is None:  # this can happen when user disables door entity... which is nonsensical but possible
-            _LOGGER.warning(f"{self.unique_id} will not be functional - no cover registered")
-
-        async_track_state_change(self.hass, door_eid, self._on_cover_state_change)
+    @abstractmethod
+    def __init__(self, hass: HomeAssistant, state: GarageDoorState, role: str, target: DoorState):
+        super().__init__(hass, state, role)
+        self._target_of_interest = target
 
     @callback
     async def _on_cover_state_change(self, entity_id, old_state, new_state) -> None:
@@ -101,12 +84,12 @@ class GarageTransitionTimeSensor(SensorEntity):
 
 
 class GarageDoorOpenTime(GarageTransitionTimeSensor):
-    _attr_icon = "mdi:sort-clock-descending"
-    _attr_translation_key = "time_to_opened"
-    _target_of_interest: DoorState = DoorState.OPENED
+    def __init__(self, hass: HomeAssistant, state: GarageDoorState):
+        super().__init__(hass, state, "time_to_opened", DoorState.OPENED)
+        self._attr_icon = "mdi:sort-clock-descending"
 
 
 class GarageDoorCloseTime(GarageTransitionTimeSensor):
-    _attr_icon = "mdi:sort-clock-ascending"
-    _attr_translation_key = "time_to_closed"
-    _target_of_interest: DoorState = DoorState.CLOSED
+    def __init__(self, hass: HomeAssistant, state: GarageDoorState):
+        super().__init__(hass, state, "time_to_closed", DoorState.CLOSED)
+        self._attr_icon = "mdi:sort-clock-ascending"
